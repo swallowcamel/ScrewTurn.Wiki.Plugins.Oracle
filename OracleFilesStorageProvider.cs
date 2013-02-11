@@ -13,7 +13,7 @@ namespace ScrewTurn.Wiki.Plugins.Oracle {
 	/// </summary>
 	public class OracleFilesStorageProvider : OracleFilesStorageProviderBase {
 
-        private readonly ComponentInformation info = new ComponentInformation("Oracle Files Storage Provider", "Mr.Luo", "1.0.0.0", "http://www.screwturn.eu", "http://www.screwturn.eu/Version/OracleProv/Users.txt");
+        private readonly ComponentInformation info = new ComponentInformation("Oracle Files Storage Provider", "Mr.Luo", "1.0.0.0", "https://github.com/swallowcamel/ScrewTurn.Wiki.Plugins.Oracle", "https://github.com/swallowcamel/ScrewTurn.Wiki.Plugins.Oracle");
 
 		private readonly OracleCommandBuilder commandBuilder = new OracleCommandBuilder();
 
