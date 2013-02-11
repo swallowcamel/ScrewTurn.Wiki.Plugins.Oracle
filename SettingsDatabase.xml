@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<script_collections>
+  <!--script type="proc|text" default text-->
+  <script>
+    <![CDATA[
+CREATE TABLE Setting
+(
+   Name    VARCHAR (100) NOT NULL  CONSTRAINT PK_Setting PRIMARY KEY,
+   Value   VARCHAR2 (4000) NOT NULL
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE Log
+(
+   Id            NUMBER (18, 0) NOT NULL CONSTRAINT PK_Log PRIMARY KEY,
+   DateTime    DATE NOT NULL,
+   EntryType   CHAR NOT NULL,
+   "User"        VARCHAR2 (100) NOT NULL,
+   Message     VARCHAR2 (4000) NOT NULL
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE MetaDataItem
+(
+   Name   VARCHAR(100) NOT NULL,
+   Tag    VARCHAR2 (100) NOT NULL,
+   Data   VARCHAR2 (4000) NOT NULL,
+   CONSTRAINT PK_MetaDataItem PRIMARY KEY (Name, Tag)
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE RecentChange
+(
+   Id               NUMBER (18, 0) NOT NULL CONSTRAINT PK_RecentChange PRIMARY KEY,
+   Page             VARCHAR2 (200) NOT NULL,
+   Title            VARCHAR2 (200) NOT NULL,
+   MessageSubject   VARCHAR2 (200),
+   DateTime         DATE NOT NULL,
+   "User"           VARCHAR2 (100) NOT NULL,
+   Change           CHAR NOT NULL,
+   Description      VARCHAR2 (4000)
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE PluginAssembly
+(
+   Name       VARCHAR (100) NOT NULL CONSTRAINT PK_PluginAssembly PRIMARY KEY,
+   Assembly   BLOB NOT NULL
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE PluginStatus
+(
+   Name          VARCHAR (150) NOT NULL CONSTRAINT PK_PluginStatus PRIMARY KEY,
+   Enabled       INT NOT NULL,
+   Configuration   VARCHAR2 (4000) NOT NULL
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE OutgoingLink
+(
+   Source    VARCHAR2 (100) NOT NULL,
+   Destination   VARCHAR2 (100) NOT NULL,
+   CONSTRAINT PK_OutgoingLink PRIMARY KEY (Source, Destination)
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE TABLE AclEntry
+(
+   "Resource" VARCHAR2 (200) NOT NULL,
+   Action     VARCHAR2 (50) NOT NULL,
+   Subject    VARCHAR2 (100) NOT NULL,
+   Value      CHAR NOT NULL,
+   CONSTRAINT PK_AclEntry PRIMARY KEY ("Resource", Action, Subject)
+)
+]]>
+  </script>
+
+  <script>
+    <![CDATA[CREATE SEQUENCE LOG_SEQ]]>
+  </script>
+
+  <script>
+    <![CDATA[CREATE SEQUENCE RECENT_CHANGE_SEQ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+CREATE OR REPLACE TRIGGER LOG_SEQ_AUTO_NUMBER
+   BEFORE INSERT
+   ON Log
+   FOR EACH ROW
+BEGIN
+   IF :new.Id IS NULL
+   THEN
+      SELECT LOG_SEQ.NEXTVAL INTO :new.Id FROM DUAL;
+   END IF;
+END;
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER RC_SEQ_AUTO_NUMBER
+   BEFORE INSERT
+   ON RecentChange
+   FOR EACH ROW
+BEGIN
+   IF :new.Id IS NULL
+   THEN
+      SELECT RECENT_CHANGE_SEQ.NEXTVAL INTO :new.Id FROM DUAL;
+   END IF;
+END;
+]]>
+  </script>
+
+  <script>
+    <![CDATA[
+/* Formatted on 2013/2/9 17:37:26 (QP5 v5.240.12305.39476) */
+DECLARE
+   TCOUNT   INT := 0;
+BEGIN
+   SELECT COUNT (*)
+     INTO TCOUNT
+     FROM USER_TABLES
+    WHERE UPPER (TABLE_NAME) = UPPER ('Version');
+
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'CREATE TABLE Version (Component VARCHAR2(100) NOT NULL, Version INT NOT NULL, CONSTRAINT PK_Version PRIMARY KEY (Component) )';
+   END IF;
+
+   EXECUTE IMMEDIATE 'SELECT COUNT (*)  FROM Version WHERE Component =:1'
+   INTO TCOUNT
+   USING 'Settings';
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE 'INSERT INTO Version (Component, Version) VALUES (:1, 3000)' 
+      USING 'Settings';
+      COMMIT;
+   END IF;
+END;
+    ]]>
+  </script>
+
+</script_collections>

@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{4B1D73F2-4AE2-4976-B3B5-587DEA808818}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ScrewTurn.Wiki.Plugins.Oracle</RootNamespace>
+    <AssemblyName>OracleProviders</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Oracle.DataAccess, Version=2.112.3.0, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\联宇项目\share\Libraries\odp.net\10.2\Oracle.DataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="Oracle.DataAccess.resources, Version=2.112.3.0, Culture=zh-CHS, PublicKeyToken=89b483f429c47342, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\联宇项目\share\Libraries\odp.net\10.2\Oracle.DataAccess.resources.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="OracleProvidersCommon\Hash.cs" />
+    <Compile Include="OracleProvidersCommon\ICommandBuilder.cs" />
+    <Compile Include="OracleProvidersCommon\IIndexConnector.cs" />
+    <Compile Include="OracleProvidersCommon\IndexConnector.cs" />
+    <Compile Include="OracleProvidersCommon\OracleKeyWordes.cs" />
+    <Compile Include="OracleProvidersCommon\Parameter.cs" />
+    <Compile Include="OracleProvidersCommon\QueryBuilder.cs" />
+    <Compile Include="OracleProvidersCommon\OracleAclManager.cs" />
+    <Compile Include="OracleProvidersCommon\OracleClassBase.cs" />
+    <Compile Include="OracleProvidersCommon\OracleFilesStorageProviderBase.cs" />
+    <Compile Include="OracleProvidersCommon\OracleIndex.cs" />
+    <Compile Include="OracleProvidersCommon\OraclePagesStorageProviderBase.cs" />
+    <Compile Include="OracleProvidersCommon\OracleSettingsStorageProviderBase.cs" />
+    <Compile Include="OracleProvidersCommon\OracleStorageProviderBase.cs" />
+    <Compile Include="OracleProvidersCommon\OracleUsersStorageProviderBase.cs" />
+    <Compile Include="OracleProvidersCommon\Tools.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="OracleCommandBuilder.cs" />
+    <Compile Include="OracleFilesStorageProvider.cs" />
+    <Compile Include="OraclePagesStorageProvider.cs" />
+    <Compile Include="OracleSettingsStorageProvider.cs" />
+    <Compile Include="OracleUsersStorageProvider.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FilesDatabase.xml" />
+    <Content Include="PagesDatabase.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="PagesDatabase_3000to3001.xml" />
+    <Content Include="SettingsDatabase.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="UsersDatabase.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AclEngine\AclEngine.csproj">
+      <Project>{44B0F4C1-8CDC-4272-B2A2-C0AF689CEB81}</Project>
+      <Name>AclEngine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PluginFramework\PluginFramework.csproj">
+      <Project>{531A83D6-76F9-4014-91C5-295818E2D948}</Project>
+      <Name>PluginFramework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SearchEngine\SearchEngine.csproj">
+      <Project>{2DF980A6-4742-49B1-A090-DE79314644D0}</Project>
+      <Name>SearchEngine</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetPath) C:\Users\Mr.Luo\Desktop\ScrewTurnWiki-3.0.5.600-Source\WebApplication\public\Plugins\$(TargetFileName)</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

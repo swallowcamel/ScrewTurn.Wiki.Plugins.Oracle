@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<script_collections>
+
+  <script>
+    <![CDATA[DROP TABLE IndexWordMapping  CASCADE CONSTRAINTS]]>
+  </script>
+  <script>
+    <![CDATA[DROP TABLE IndexWord CASCADE CONSTRAINTS]]>
+  </script>
+  <script>
+    <![CDATA[DROP TABLE IndexDocument CASCADE CONSTRAINTS]]>
+  </script>
+  <script>
+    <![CDATA[
+  CREATE TABLE IndexDocument
+  (
+  Id         NUMBER (18, 0) NOT NULL CONSTRAINT PK_IndexDocument PRIMARY KEY,
+  Name       VARCHAR2 (200) NOT NULL CONSTRAINT UQ_IDOC UNIQUE,
+  Title      VARCHAR2 (200) NOT NULL,
+  TypeTag    VARCHAR2 (10) NOT NULL,
+  DateTime   DATE NOT NULL
+  )
+  ]]>
+  </script>
+  <script>
+    <![CDATA[
+  CREATE TABLE IndexWord
+  (
+  Id     NUMBER (18, 0) NOT NULL CONSTRAINT PK_IndexWord PRIMARY KEY,
+  Text   VARCHAR2 (200) NOT NULL CONSTRAINT UQ_IndexWord UNIQUE
+  )
+  ]]>
+  </script>
+  <script>
+    <![CDATA[
+  CREATE TABLE IndexWordMapping
+  (
+  Word             INT  NOT NULL  CONSTRAINT FK_IWM_IW  REFERENCES IndexWord (Id) ON DELETE CASCADE,
+  Document         INT  NOT NULL  CONSTRAINT FK_IWM_IDOC  REFERENCES IndexDocument (Id) ON DELETE CASCADE,
+  FirstCharIndex   SMALLINT NOT NULL,
+  WordIndex        SMALLINT NOT NULL,
+  Location         NUMBER(3,0) NOT NULL,
+  CONSTRAINT PK_IndexWordMapping PRIMARY KEY  (Word, Document, FirstCharIndex, WordIndex, Location)
+  )
+  ]]>
+  </script>
+  <script>
+    <![CDATA[
+  CREATE OR REPLACE TRIGGER IWM_IW_U_TR
+  AFTER UPDATE OF Id
+  ON IndexWord
+  FOR EACH ROW
+  BEGIN
+  UPDATE IndexWordMapping a
+  SET a.Word = :New.Id
+  WHERE a.Word = :Old.Id;
+  END;
+  ]]>
+  </script>
+  <script>
+    <![CDATA[
+  CREATE OR REPLACE TRIGGER IWM_ID_U_TR
+  AFTER UPDATE OF Id
+  ON IndexDocument
+  FOR EACH ROW
+  BEGIN
+  UPDATE IndexWordMapping a
+  SET a.Document = :New.Id
+  WHERE a.Document = :Old.Id;
+  END;
+  ]]>
+  </script>
+  <script>
+    <![CDATA[ UPDATE Version SET Version = 3001  WHERE Component = 'Pages' ]]>
+  </script>
+
+</script_collections>

@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<script_collections>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Directory
+    (
+       FullPath   VARCHAR2 (250) NOT NULL CONSTRAINT PK_Directory PRIMARY KEY,
+       Parent     VARCHAR2 (250)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE "File"
+    (
+       Name           VARCHAR2 (200) NOT NULL,
+       Directory      VARCHAR2 (250)
+             NOT NULL
+             CONSTRAINT FK_File_Directory
+                 REFERENCES Directory (FullPath) ON DELETE CASCADE,
+       "Size"         NUMBER (18, 0) NOT NULL,
+       Downloads      INT NOT NULL,
+       LastModified   DATE NOT NULL,
+       Data           BLOB NOT NULL,
+       CONSTRAINT PK_File PRIMARY KEY (Name, Directory)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Attachment
+    (
+       Name           VARCHAR2 (200) NOT NULL,
+       Page           VARCHAR2 (200) NOT NULL,
+       "Size"         NUMBER (18, 0) NOT NULL,
+       Downloads      INT NOT NULL,
+       LastModified   DATE NOT NULL,
+       Data           BLOB NOT NULL,
+       CONSTRAINT PK_Attachment PRIMARY KEY (Name, Page)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER F_D_U_TR
+       AFTER UPDATE OF FullPath
+       ON Directory
+       FOR EACH ROW
+    BEGIN
+       UPDATE "File" a
+          SET a.Directory = :New.FullPath
+        WHERE a.Directory = :Old.FullPath;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    /* Formatted on 2013/2/9 20:04:13 (QP5 v5.240.12305.39476) */
+DECLARE
+   TCOUNT   INT := 0;
+BEGIN
+   SELECT COUNT (*)
+     INTO TCOUNT
+     FROM USER_TABLES
+    WHERE UPPER (TABLE_NAME) = UPPER ('Version');
+
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'CREATE TABLE Version (Component VARCHAR2(100) NOT NULL, Version INT NOT NULL, CONSTRAINT PK_Version PRIMARY KEY (Component) )';
+   END IF;
+
+   EXECUTE IMMEDIATE 'SELECT COUNT (*) FROM Version WHERE Component = :1'
+      INTO TCOUNT
+      USING 'Files';
+
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'INSERT INTO Version (Component, Version) VALUES (:1, 3000)'
+         USING 'Files';
+
+      COMMIT;
+   END IF;
+END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[    
+    DECLARE
+       TCOUNT   INT := 0;
+    BEGIN
+       SELECT COUNT (FullPath)
+         INTO TCOUNT
+         FROM Directory
+        WHERE FullPath = '/';
+
+       IF TCOUNT = 0
+       THEN
+          INSERT INTO Directory (FullPath, Parent)
+               VALUES ('/', NULL);
+
+          COMMIT;
+       END IF;
+    END;
+    ]]>
+  </script>
+
+</script_collections>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<script_collections>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE "User"
+    (
+       Username       VARCHAR2 (100) NOT NULL CONSTRAINT PK_User PRIMARY KEY,
+       PasswordHash   VARCHAR2 (100) NOT NULL,
+       DisplayName    VARCHAR2 (150),
+       Email          VARCHAR2 (100) NOT NULL,
+       Active         INT NOT NULL,
+       DateTime       DATE NOT NULL
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE UserGroup
+    (
+       Name          VARCHAR2 (100) NOT NULL CONSTRAINT PK_UserGroup01 PRIMARY KEY,
+       Description   VARCHAR2 (150)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE UserGroupMembership
+    (
+       "User" VARCHAR2 (100)
+             NOT NULL
+             CONSTRAINT FK_UGM_U01
+                 REFERENCES "User" (Username) ON DELETE CASCADE,
+       UserGroup VARCHAR2 (100)
+             NOT NULL
+             CONSTRAINT FK_UGM_UG01
+                 REFERENCES UserGroup (Name) ON DELETE CASCADE,
+       CONSTRAINT PK_UserGroupMembership PRIMARY KEY ("User", UserGroup)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE UserData
+    (
+       "User" VARCHAR2 (100)
+             NOT NULL
+             CONSTRAINT FK_UD_U01
+                 REFERENCES "User" (Username) ON DELETE CASCADE,
+       Key    VARCHAR2 (100) NOT NULL,
+       Data   VARCHAR2 (4000) NOT NULL,
+       CONSTRAINT PK_UserData PRIMARY KEY ("User", Key)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER UGM_U_U_TR
+       AFTER UPDATE OF Username
+       ON "User"
+       FOR EACH ROW
+    BEGIN
+       UPDATE UserGroupMembership a
+          SET a."User" = :New.Username
+        WHERE a."User" = :Old.Username;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER UGM_UG_U_TR
+       AFTER UPDATE OF Name
+       ON UserGroup
+       FOR EACH ROW
+    BEGIN
+       UPDATE UserGroupMembership a
+          SET a.UserGroup = :New.Name
+        WHERE a.UserGroup = :Old.Name;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER UD_U_U_TR
+       AFTER UPDATE OF Username
+       ON "User"
+       FOR EACH ROW
+    BEGIN
+       UPDATE UserData a
+          SET a."User" = :New.Username
+        WHERE a."User" = :Old.Username;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    /* Formatted on 2013/2/9 20:09:33 (QP5 v5.240.12305.39476) */
+DECLARE
+   TCOUNT   INT := 0;
+BEGIN
+   SELECT COUNT (*)
+     INTO TCOUNT
+     FROM USER_TABLES
+    WHERE UPPER (TABLE_NAME) = UPPER ('Version');
+
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'CREATE TABLE Version (Component VARCHAR2(100) NOT NULL, Version INT NOT NULL, CONSTRAINT PK_Version PRIMARY KEY (Component) )';
+   END IF;
+
+   EXECUTE IMMEDIATE 'SELECT COUNT (*) FROM Version WHERE Component =:1'
+      INTO TCOUNT
+      USING 'Users';
+
+   IF TCOUNT = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'INSERT INTO Version (Component, Version) VALUES (:1, 3000)'
+         USING 'Users';
+
+      COMMIT;
+   END IF;
+END;
+    ]]>
+  </script>
+
+</script_collections>

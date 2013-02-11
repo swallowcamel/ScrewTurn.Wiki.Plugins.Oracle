@@ -1,0 +1,354 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<script_collections>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Namespace
+    (
+       Name          VARCHAR2 (100) NOT NULL CONSTRAINT PK_Namespace PRIMARY KEY,
+       DefaultPage   VARCHAR2 (200)       
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Category
+    (
+       Name        VARCHAR2 (100) NOT NULL ,
+       Namespace   VARCHAR2 (100) NOT NULL CONSTRAINT FK_C_NS01 REFERENCES Namespace(Name) ON DELETE CASCADE,
+       CONSTRAINT PK_Category PRIMARY KEY (Name, Namespace)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Page
+    (
+       Name               VARCHAR2 (200) NOT NULL,
+       Namespace          VARCHAR2 (100) NOT NULL CONSTRAINT FK_P_NS01 REFERENCES Namespace(Name) ON DELETE CASCADE,
+       CreationDateTime   DATE NOT NULL,
+       CONSTRAINT PK_Page PRIMARY KEY (Name, Namespace)
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE CategoryBinding
+    (
+       Namespace   VARCHAR2 (100) NOT NULL CONSTRAINT FK_CB_NS01 REFERENCES Namespace(Name) ,
+       Category    VARCHAR2 (100) NOT NULL,
+       Page        VARCHAR2 (200) NOT NULL,
+       CONSTRAINT PK_CategoryBinding PRIMARY KEY (Namespace, Page, Category),
+       CONSTRAINT FK_CB_C01 FOREIGN KEY (Category, Namespace) REFERENCES Category(Name, Namespace) ON DELETE CASCADE,
+       CONSTRAINT FK_CB_P01 FOREIGN KEY (Page, Namespace)  REFERENCES Page(Name, Namespace) 
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE PageContent
+    (
+       Page           VARCHAR2 (200) NOT NULL,
+       Namespace      VARCHAR2 (100) NOT NULL,
+       Revision       SMALLINT NOT NULL,
+       Title          VARCHAR2 (200) NOT NULL,
+       "User"         VARCHAR2 (100) NOT NULL,
+       LastModified   DATE NOT NULL,
+       "Comment"      VARCHAR2 (300),
+       Content        CLOB NOT NULL,
+       Description    VARCHAR2 (200),
+       CONSTRAINT PK_PageContent PRIMARY KEY (Page, Namespace, Revision),
+       CONSTRAINT FK_PC_P01 FOREIGN KEY (Page, Namespace) REFERENCES Page(Name, Namespace) ON DELETE CASCADE
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE PageKeyword
+    (
+       Page        VARCHAR2 (200) NOT NULL,
+       Namespace   VARCHAR2 (100) NOT NULL,
+       Revision    SMALLINT NOT NULL,
+       Keyword     VARCHAR2 (50) NOT NULL,
+       CONSTRAINT PK_PageKeyword PRIMARY KEY(Page, Namespace, Revision, Keyword),
+       CONSTRAINT FK_PK_PC01 FOREIGN KEY (Page, Namespace, Revision)  REFERENCES PageContent(Page, Namespace, Revision) ON DELETE CASCADE 
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Message
+    (
+       Page        VARCHAR2 (200) NOT NULL,
+       Namespace   VARCHAR2 (100) NOT NULL,
+       Id          SMALLINT NOT NULL,
+       Parent      SMALLINT,
+       Username    VARCHAR2 (100) NOT NULL,
+       Subject     VARCHAR2 (200) NOT NULL,
+       DateTime    DATE NOT NULL,
+       Body        CLOB NOT NULL,
+       CONSTRAINT PK_Message PRIMARY KEY (Page, Namespace, Id),
+       CONSTRAINT FK_MSG_P01 FOREIGN KEY (Page, Namespace) REFERENCES Page(Name, Namespace) ON DELETE CASCADE
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE NavigationPath
+    (
+       Name        VARCHAR2 (100) NOT NULL,
+       Namespace   VARCHAR2 (100) NOT NULL,
+       Page        VARCHAR2 (200) NOT NULL,
+       "Number"    SMALLINT NOT NULL,
+       CONSTRAINT PK_NavigationPath PRIMARY KEY (Name, Namespace, Page),
+       CONSTRAINT FK_NAVP_P01 FOREIGN KEY (Page, Namespace) REFERENCES Page(Name, Namespace) ON DELETE CASCADE
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE Snippet
+    (
+       Name      VARCHAR2 (200) NOT NULL CONSTRAINT PK_Snippet PRIMARY KEY,
+       Content   CLOB NOT NULL
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE ContentTemplate
+    (
+       Name      VARCHAR2 (200) NOT NULL CONSTRAINT PK_ContentTemplate PRIMARY KEY ,
+       Content   CLOB NOT NULL
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE IndexDocument
+    (
+       Id        NUMBER (18, 0) NOT NULL  CONSTRAINT PK_IndexDocument PRIMARY KEY,
+       Name      VARCHAR2 (200) NOT NULL CONSTRAINT UQ_IndexDocument UNIQUE,
+       Title     VARCHAR2 (200) NOT NULL,
+       TypeTag   VARCHAR2 (10)  NOT NULL,
+       DateTime  DATE NOT NULL
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE TABLE IndexWord
+    (
+       Id     NUMBER (18, 0) NOT NULL CONSTRAINT PK_IndexWord PRIMARY KEY,
+       Text   VARCHAR2 (200) NOT NULL CONSTRAINT UQ_IndexWord UNIQUE 
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[ 
+    CREATE TABLE IndexWordMapping
+    (
+       Word             NUMBER (18, 0) NOT NULL CONSTRAINT FK_IWM_IW01  REFERENCES IndexWord(Id) ON DELETE CASCADE ,
+       Document         NUMBER (18, 0) NOT NULL CONSTRAINT FK_IWM_IDOC01 REFERENCES IndexDocument(Id) ON DELETE CASCADE ,
+       FirstCharIndex   SMALLINT NOT NULL,
+       WordIndex        SMALLINT NOT NULL,
+       Location         NUMBER (3, 0) NOT NULL,
+       CONSTRAINT PK_IndexWordMapping PRIMARY KEY (Word, Document, FirstCharIndex, WordIndex, Location)       
+    )
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+      CREATE OR REPLACE TRIGGER C_CB_U_TR
+         AFTER UPDATE OF Name, Namespace
+         ON Category
+         FOR EACH ROW
+      BEGIN
+         UPDATE CategoryBinding a
+            SET a.Category = :New.Name, a.Namespace = :New.Namespace
+          WHERE a.Category = :Old.Name AND a.Namespace = :Old.Namespace;
+      END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER P_PC_U_TR
+       AFTER UPDATE OF Name, Namespace
+       ON Page
+       FOR EACH ROW
+    BEGIN
+       UPDATE CategoryBinding a
+          SET a.Page = :New.Name, a.Namespace =:New.Namespace
+        WHERE a.Page =:Old.Name AND a.Namespace =:Old.Namespace;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER PC_PK_U_TR
+       AFTER UPDATE OF Page, Namespace, Revision
+       ON PageContent
+       FOR EACH ROW
+    BEGIN
+       UPDATE PageKeyword a
+          SET a.Page = :New.Page,
+              a.Namespace = :New.Namespace,
+              a.Revision = :New.Revision
+        WHERE     a.Page = :Old.Page
+              AND a.Namespace = :Old.Namespace
+              AND a.Revision = :Old.Revision;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER M_P_U_TR
+       AFTER UPDATE OF Name, Namespace
+       ON Page
+       FOR EACH ROW
+    BEGIN
+       UPDATE Message a
+          SET a.Page = :New.Name, a.Namespace = :New.Namespace
+        WHERE a.Page = :Old.Name AND a.Namespace = :Old.Namespace;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER NP_P_U_TR
+       AFTER UPDATE OF Name, Namespace
+       ON Page
+       FOR EACH ROW
+    BEGIN
+       UPDATE NavigationPath a
+          SET a.Page = :New.Name, a.Namespace = :New.Namespace
+        WHERE a.Page= :Old.Name AND a.Namespace = :Old.Namespace;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER N_C_U_TR
+       AFTER UPDATE OF Name
+       ON Namespace
+       FOR EACH ROW
+    BEGIN
+       UPDATE Category a
+          SET a.Name = :New.Name
+        WHERE a.Name = :Old.Name;
+
+       UPDATE Page b
+          SET b.Name = :New.Name
+        WHERE b.Name = :Old.Name;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER N_P_U_TR
+       AFTER UPDATE OF Name
+       ON Namespace
+       FOR EACH ROW
+    BEGIN
+       UPDATE Page a
+          SET a.Name = :New.Name
+        WHERE a.Name = :Old.Name;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER IWM_IW_U_TR
+       AFTER UPDATE OF Id
+       ON IndexWord
+       FOR EACH ROW
+    BEGIN
+       UPDATE IndexWordMapping a
+          SET a.Word = :New.Id
+        WHERE a.Word = :Old.Id;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    CREATE OR REPLACE TRIGGER IWM_ID_U_TR
+       AFTER UPDATE OF Id
+       ON IndexDocument
+       FOR EACH ROW
+    BEGIN
+       UPDATE IndexWordMapping a
+          SET a.Document = :New.Id
+        WHERE a.Document = :Old.Id;
+    END;
+    ]]>
+  </script>
+
+  <script>
+    <![CDATA[
+    /* Formatted on 2013/2/9 20:07:33 (QP5 v5.240.12305.39476) */
+DECLARE
+   i   NUMBER := -1;
+BEGIN
+   SELECT COUNT (*)
+     INTO i
+     FROM USER_TABLES
+    WHERE UPPER (TABLE_NAME) = UPPER ('Version');
+
+   IF i = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'CREATE TABLE Version (Component VARCHAR2(100) NOT NULL, Version INT NOT NULL, CONSTRAINT PK_Version PRIMARY KEY (Component) )';
+   END IF;
+
+   EXECUTE IMMEDIATE 'SELECT COUNT (*) FROM Version WHERE Component = :1'
+      INTO i
+      USING 'Pages';
+
+   IF i = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'INSERT INTO Version (Component, Version) VALUES (:1, 3001)'
+         USING 'Pages';
+
+      COMMIT;
+   END IF;
+
+   EXECUTE IMMEDIATE 'SELECT COUNT (Name) FROM Namespace  WHERE Name = :1'
+      INTO i
+      USING ' ';
+
+   IF i = 0
+   THEN
+      EXECUTE IMMEDIATE
+         'INSERT INTO Namespace (Name, DefaultPage) VALUES (:1, NULL)'
+         USING ' ';
+
+      COMMIT;
+   END IF;
+END;
+    ]]>
+  </script>
+
+</script_collections>
+
